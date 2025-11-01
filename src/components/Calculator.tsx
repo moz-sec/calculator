@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { calculate, type Operator } from "../lib/calculatorEngine";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -134,6 +134,83 @@ export function Calculator() {
       return next || "0";
     });
   }, [waitingForOperand]);
+
+  // キーボード入力のハンドラー
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const { key } = event;
+
+      // 数字キー (0-9)
+      if ("0" <= key && key <= "9") {
+        event.preventDefault();
+        handleNumber(key);
+        return;
+      }
+
+      // 演算子キー
+      if (key === "+") {
+        event.preventDefault();
+        handleOperator("+");
+        return;
+      }
+      if (key === "-") {
+        event.preventDefault();
+        handleOperator("-");
+        return;
+      }
+      if (key === "*") {
+        event.preventDefault();
+        handleOperator("*");
+        return;
+      }
+      if (key === "/") {
+        event.preventDefault();
+        handleOperator("/");
+        return;
+      }
+
+      // イコールキー (Enter, =)
+      if (key === "Enter" || key === "=") {
+        event.preventDefault();
+        handleEquals();
+        return;
+      }
+
+      // 小数点キー
+      if (key === "." || key === ",") {
+        event.preventDefault();
+        handleDecimal();
+        return;
+      }
+
+      // バックスペース (Backspace, Delete)
+      if (key === "Backspace" || key === "Delete") {
+        event.preventDefault();
+        handleBackspace();
+        return;
+      }
+
+      // クリアキー (Escape)
+      if (key === "Escape") {
+        event.preventDefault();
+        handleClear();
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    handleNumber,
+    handleOperator,
+    handleEquals,
+    handleDecimal,
+    handleBackspace,
+    handleClear,
+  ]);
 
   return (
     <Card className="w-full max-w-sm mx-auto p-6">
