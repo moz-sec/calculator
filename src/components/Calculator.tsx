@@ -6,11 +6,17 @@ import { Card } from "./ui/card";
 
 interface CalculatorDisplayProps {
   value: string;
+  hint?: string;
 }
 
-function CalculatorDisplay({ value }: CalculatorDisplayProps) {
+function CalculatorDisplay({ value, hint }: CalculatorDisplayProps) {
   return (
-    <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-4 min-h-20 flex items-end justify-end">
+    <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800 p-4 min-h-20 flex flex-col items-end justify-end">
+      {hint ? (
+        <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400 mb-1 text-right break-all">
+          {hint}
+        </div>
+      ) : null}
       <div className="text-4xl font-mono font-semibold text-right break-all">
         {value || "0"}
       </div>
@@ -73,6 +79,7 @@ export function Calculator() {
   const [lastPressedButton, setLastPressedButton] = useState<string | null>(
     null
   );
+  const [lastExpression, setLastExpression] = useState<string>("");
 
   const handleNumber = useCallback(
     (digit: string) => {
@@ -80,6 +87,7 @@ export function Calculator() {
       setDisplay((prev) => {
         if (waitingForOperand) {
           setWaitingForOperand(false);
+          setLastExpression("");
           return digit;
         }
         const next = prev === "0" ? digit : prev + digit;
@@ -119,6 +127,17 @@ export function Calculator() {
     setLastPressedButton(null);
     const inputValue = Number.parseFloat(display);
     const result = calculate(previousValue, inputValue, operator);
+    setLastExpression(
+      `${previousValue} ${
+        operator === "+"
+          ? "+"
+          : operator === "-"
+          ? "−"
+          : operator === "*"
+          ? "×"
+          : "÷"
+      } ${inputValue}`
+    );
     setDisplay(String(result));
     setPreviousValue(null);
     setOperator(null);
@@ -131,6 +150,7 @@ export function Calculator() {
     setPreviousValue(null);
     setOperator(null);
     setWaitingForOperand(false);
+    setLastExpression("");
   }, []);
 
   const handleDecimal = useCallback(() => {
@@ -138,6 +158,7 @@ export function Calculator() {
     if (waitingForOperand) {
       setDisplay("0.");
       setWaitingForOperand(false);
+      setLastExpression("");
       return;
     }
     setDisplay((prev) => (prev.includes(".") ? prev : prev + "."));
@@ -229,10 +250,27 @@ export function Calculator() {
     handleClear,
   ]);
 
+  const operatorToSymbol = (op: Operator | null): string => {
+    if (op === "+") return "+";
+    if (op === "-") return "−";
+    if (op === "*") return "×";
+    if (op === "/") return "÷";
+    return "";
+  };
+
+  const liveHint =
+    previousValue !== null && operator
+      ? `${previousValue} ${operatorToSymbol(operator)} ${
+          waitingForOperand ? "" : display
+        }`.trim()
+      : "";
+
+  const hint = liveHint || lastExpression;
+
   return (
     <Card className="w-full max-w-sm mx-auto p-6">
       <div className="space-y-4">
-        <CalculatorDisplay value={display} />
+        <CalculatorDisplay value={display} hint={hint} />
 
         <div className="grid grid-cols-4 gap-2">
           <CalculatorButton
